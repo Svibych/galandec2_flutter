@@ -1,0 +1,42 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build_ios:
+    runs-on: macos-latest
+    env:
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.13.10' # укажи свою версию Flutter
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build IPA
+        run: |
+          flutter build ipa \
+            --release \
+            --export-options-plist ios/ExportOptions.plist \
+            --no-codesign
+          
+      - name: Package IPA
+        run: mkdir -p output && cp build/ios/ipa/*.ipa output/app.ipa
+
+      - name: Upload IPA as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: galandec2_flutter.ipa
+          path: output/app.ipa
